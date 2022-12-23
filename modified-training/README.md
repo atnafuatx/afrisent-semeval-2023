@@ -1,5 +1,7 @@
 # Simple Training over all alnguages in Subtask A
 
+https://colab.research.google.com/drive/1gRWeCr95cNs2Dnk1mdshG5ttJsdvgYhT?usp=sharing
+
 
 
 
