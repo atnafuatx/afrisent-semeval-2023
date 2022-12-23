@@ -2,6 +2,7 @@ scikit-learn
 evaluate
 pandas
 numpy
+transformers
 scipy
 protobuf
 scikit-learn
