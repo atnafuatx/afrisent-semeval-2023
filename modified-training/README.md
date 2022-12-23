@@ -1,6 +1,10 @@
 # Simple Training over all alnguages in Subtask A
 
-https://colab.research.google.com/drive/1gRWeCr95cNs2Dnk1mdshG5ttJsdvgYhT?usp=sharing
+
+<a target="_blank" href="https://colab.research.google.com/drive/1gRWeCr95cNs2Dnk1mdshG5ttJsdvgYhT?usp=sharing">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+</a>
+
 
 
 
