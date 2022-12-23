@@ -1,0 +1,10 @@
+scikit-learn
+evaluate
+pandas
+numpy
+scipy
+protobuf
+scikit-learn
+accelerate
+sentencepiece!=0.1.92
+datasets>=1.8.0
