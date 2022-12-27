@@ -1,4 +1,4 @@
-# Simple Training over all alnguages in Subtask A
+# Simple Training over all languages in Subtask A
 
 
 <a target="_blank" href="https://colab.research.google.com/drive/1gRWeCr95cNs2Dnk1mdshG5ttJsdvgYhT?usp=sharing">
