@@ -43,12 +43,17 @@ from transformers import (
     TrainingArguments,
     default_data_collator,
     set_seed,
+    EarlyStoppingCallback,
+    IntervalStrategy
 )
 from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils import check_min_version, send_example_telemetry
 from transformers.utils.versions import require_version
 from datasets import Features, Value, ClassLabel, load_dataset, Dataset
 
+import wandb
+
+wandb.init(project="afrisenti")
 require_version("datasets>=1.8.0", "To fix: pip install -r examples/pytorch/text-classification/requirements.txt")
 
 logger = logging.getLogger(__name__)
@@ -132,6 +137,21 @@ class ModelArguments:
         default=None,
         metadata={"help": "path to the dataset"},
     )
+    
+    train_file: Optional[str] = field(
+        default=None,
+        metadata={"help": "path to the dataset"},
+    )
+    
+    val_file: Optional[str] = field(
+        default=None,
+        metadata={"help": "path to the dataset"},
+    )
+    
+    pred_file: Optional[str] = field(
+        default=None,
+        metadata={"help": "path to the dataset"},
+    )
     cache_dir: Optional[str] = field(
         default=None,
         metadata={"help": "Where do you want to store the pretrained models downloaded from huggingface.co"},
@@ -167,6 +187,8 @@ def main():
     # See all possible arguments in src/transformers/training_args.py
     # or by passing the --help flag to this script.
     # We now keep distinct sets of args, for a cleaner separation of concerns.
+    # 
+    
 
     parser = HfArgumentParser((ModelArguments, DataTrainingArguments, TrainingArguments))
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
@@ -210,17 +232,20 @@ def main():
                 f"Checkpoint detected, resuming training at {last_checkpoint}. To avoid this behavior, change "
                 "the `--output_dir` or add `--overwrite_output_dir` to train from scratch."
             )
-
+    
+    
+    TrainingArguments.run_name=training_args.output_dir
+    # 
     # Set seed before initializing model.
     set_seed(training_args.seed)
 
     # In distributed training, the load_dataset function guarantees that only one local process can concurrently
     # download the dataset.
     # Downloading and loading xnli dataset from the hub.
-    df = pd.read_csv(model_args.data_dir + '_train.tsv', sep='\t')
-    df = df.dropna()
-    train_dataset = Dataset.from_pandas(df)
-    label_list = df['label'].unique().tolist()
+    # df = pd.read_csv(model_args.data_dir + '_train_new.tsv', sep='\t')
+    # df = df.dropna()
+    # train_dataset = Dataset.from_pandas(df)
+    # label_list = df['label'].unique().tolist()
 
     if training_args.do_train:
 
@@ -228,8 +253,13 @@ def main():
         #df = train_dataset["train"].to_pandas()
         #label_list = df['label'].unique().tolist()
         #label_list = train_dataset.features["label"].names
-        df = pd.read_csv(model_args.data_dir + '_train.tsv', sep='\t')
-        df = df.dropna()
+        # df = pd.read_csv(model_args.data_dir + '_train.tsv', sep='\t')
+        # df = df.dropna()
+        
+        if model_args.train_file:
+            df = pd.read_csv(model_args.train_file, sep='\t')
+            df = df.dropna()
+            
         train_dataset = Dataset.from_pandas(df)
         label_list = df['label'].unique().tolist()
 
@@ -239,8 +269,12 @@ def main():
         #df = eval_dataset["validation"].to_pandas()
         #label_list = df['label'].unique().tolist()
         #label_list = eval_dataset.features["label"].names
-        df = pd.read_csv(model_args.data_dir + '_dev.tsv', sep='\t')
-        df = df.dropna()
+        # df = pd.read_csv(model_args.data_dir + '_dev_new.tsv', sep='\t')
+        # df = df.dropna()
+        
+        if model_args.val_file:
+            df = pd.read_csv(model_args.val_file, sep='\t')
+            df = df.dropna()
         eval_dataset = Dataset.from_pandas(df)
         label_list = df['label'].unique().tolist()
 
@@ -250,8 +284,12 @@ def main():
         #df = predict_dataset["test"].to_pandas()
         #label_list = df['label'].unique().tolist()
         #label_list = predict_dataset.features["label"].names
-        df = pd.read_csv(model_args.data_dir + '_dev.tsv', sep='\t')
-        df = df.dropna()
+        # df = pd.read_csv(model_args.data_dir + '_dev.tsv', sep='\t')
+        # df = df.dropna()
+        
+        if model_args.pred_file:
+            df = pd.read_csv(model_args.val_file, sep='\t')
+            df = df.dropna()
         predict_dataset = Dataset.from_pandas(df)
         # label_list = df['label'].unique().tolist()
 
@@ -368,14 +406,14 @@ def main():
             )
 
     # Get the metric function
-    metric = evaluate.load("accuracy")
+    metric = evaluate.load("f1")
 
     # You can define your custom compute_metrics function. It takes an `EvalPrediction` object (a namedtuple with a
     # predictions and label_ids field) and has to return a dictionary string to float.
     def compute_metrics(p: EvalPrediction):
         preds = p.predictions[0] if isinstance(p.predictions, tuple) else p.predictions
         preds = np.argmax(preds, axis=1)
-        return metric.compute(predictions=preds, references=p.label_ids)
+        return metric.compute(predictions=preds, references=p.label_ids,average='macro')
 
     # Data collator will default to DataCollatorWithPadding, so we change it if we already did the padding.
     if data_args.pad_to_max_length:
@@ -385,7 +423,15 @@ def main():
     else:
         data_collator = None
 
+    # training_args.report_to="wandb"
+    training_args.load_best_model_at_end = True
+    training_args.evaluation_strategy = 'epoch'
+    # training_args.eval_steps = 150
+    training_args.metric_for_best_model="eval_loss"
     # Initialize our Trainer
+    
+    # early_stop = 
+    
     trainer = Trainer(
         model=model,
         args=training_args,
@@ -394,6 +440,7 @@ def main():
         compute_metrics=compute_metrics,
         tokenizer=tokenizer,
         data_collator=data_collator,
+        callbacks = [EarlyStoppingCallback(early_stopping_patience=2)]
     )
 
     # Training
