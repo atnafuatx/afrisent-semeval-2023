@@ -51,9 +51,9 @@ from transformers.utils import check_min_version, send_example_telemetry
 from transformers.utils.versions import require_version
 from datasets import Features, Value, ClassLabel, load_dataset, Dataset
 
-import wandb
+# import wandb
 
-wandb.init(project="afrisenti")
+# wandb.init(project="afrisenti")
 require_version("datasets>=1.8.0", "To fix: pip install -r examples/pytorch/text-classification/requirements.txt")
 
 logger = logging.getLogger(__name__)
