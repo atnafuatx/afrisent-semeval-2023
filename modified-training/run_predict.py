@@ -5,7 +5,7 @@ import torch
 import os
 import pandas as pd
 import numpy as np
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, Trainer
+from transformers import AutoTokenizer,XLMRobertaTokenizer, AutoModelForSequenceClassification, Trainer
 
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter, ArgumentTypeError
 import warnings
@@ -38,7 +38,7 @@ args = parser.parse_args()
 
 # Load tokenizer and model, create trainer
 model_name = args.model_path
-tokenizer = AutoTokenizer.from_pretrained(model_name)
+tokenizer = XLMRobertaTokenizer.from_pretrained(model_name)
 model = AutoModelForSequenceClassification.from_pretrained(model_name)
 trainer = Trainer(model=model)
 

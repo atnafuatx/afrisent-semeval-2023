@@ -36,6 +36,7 @@ from transformers import (
     AutoConfig,
     AutoModelForSequenceClassification,
     AutoTokenizer,
+    XLMRobertaTokenizer,
     DataCollatorWithPadding,
     EvalPrediction,
     HfArgumentParser,
@@ -270,7 +271,7 @@ def main():
         revision=model_args.model_revision,
         use_auth_token=True if model_args.use_auth_token else None,
     )
-    tokenizer = AutoTokenizer.from_pretrained(
+    tokenizer = XLMRobertaTokenizer.from_pretrained(
         model_args.tokenizer_name if model_args.tokenizer_name else model_args.model_name_or_path,
         do_lower_case=model_args.do_lower_case,
         cache_dir=model_args.cache_dir,
