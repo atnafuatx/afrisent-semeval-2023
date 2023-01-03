@@ -118,7 +118,7 @@ class DataTrainingArguments:
     )
     tagged: bool = field(
         default=False,
-        metadata={"help": "Do multilingual training."}
+        metadata={"help": "Do multilingual training with tags."}
     )
     multilingual: bool = field(
         default=False,
