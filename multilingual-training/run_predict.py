@@ -33,6 +33,9 @@ parser.add_argument("--model_path", type=str, required=True, help="path to a tra
 parser.add_argument("--file_name", type=validate_datafile, required=True, help="path to unlabeled tweets to predict")
 parser.add_argument("--text_column", type=str, default='text', help="path to save predictions")
 parser.add_argument("--lang_code", type=str, default='text', help="language code")
+parser.add_argument("--tagged", type=bool, default=False, help="use tags during evaluation.")
+parser.add_argument("--multilingual", type=bool, default=False, help="a multilingually trained model.")
+
     
 args = parser.parse_args()
 
@@ -48,8 +51,16 @@ text_column = args.text_column
 
 df_pred = pd.read_csv(file_name, sep='\t')
 ids = df_pred.iloc[:,0].astype('str').tolist()
-pred_texts = df_pred[text_column].astype('str').tolist()
 
+if args.multilingual and args.tagged:
+    langtags = {'am':'<am>', 'dz':'<dz>', 'ha':'<ha>', 'ig':'<ig>', 'kr':'<kr>', 'ma':'<ma>', 'pcm':'<pcm>', 'pt':'<pt>', 'sw':'<sw>', 'ts':'<ts>', 'twi':'<twi>', 'yo':'<yo>'}
+    tags = [item for item in langtags.items()]
+    data_text = df_pred[text_column].astype('str').tolist()
+    tag_text = df_pred['tag'].astype('str').tolist()
+    pred_texts = [langtags[tag_text[i]]+data_text[i] for in i in range(len(data_text))]
+else:
+    pred_texts = df_pred[text_column].astype('str').tolist()
+    
 # Tokenize texts and create prediction data set
 tokenized_texts = tokenizer(pred_texts, truncation=True, padding=True)
 pred_dataset = SimpleDataset(tokenized_texts)
