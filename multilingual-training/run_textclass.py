@@ -36,7 +36,6 @@ from transformers import (
     AutoConfig,
     AutoModelForSequenceClassification,
     AutoTokenizer,
-    XLMRobertaTokenizer,
     DataCollatorWithPadding,
     EvalPrediction,
     HfArgumentParser,
@@ -117,6 +116,15 @@ class DataTrainingArguments:
             )
         },
     )
+    tagged: bool = field(
+        default=False,
+        metadata={"help": "Do multilingual training with tags."}
+    )
+    multilingual: bool = field(
+        default=False,
+        metadata={"help": "Do multilingual training."}
+    )
+
 
 
 @dataclass
@@ -309,7 +317,7 @@ def main():
         revision=model_args.model_revision,
         use_auth_token=True if model_args.use_auth_token else None,
     )
-    tokenizer = XLMRobertaTokenizer.from_pretrained(
+    tokenizer = AutoTokenizer.from_pretrained(
         model_args.tokenizer_name if model_args.tokenizer_name else model_args.model_name_or_path,
         do_lower_case=model_args.do_lower_case,
         cache_dir=model_args.cache_dir,
@@ -326,7 +334,28 @@ def main():
         use_auth_token=True if model_args.use_auth_token else None,
         ignore_mismatched_sizes=model_args.ignore_mismatched_sizes,
     )
+    
+    langtags = dict()
+    if data_args.multilingual and data_args.tagged:
+        # if you wanna train and do multilingual training with tags then we need to add the tags to the vocab
+        langtags = {'am':'<am>', 'dz':'<dz>', 'ha':'<ha>', 'ig':'<ig>', 'kr':'<kr>', 'ma':'<ma>', 'pcm':'<pcm>', 'pt':'<pt>', 'sw':'<sw>', 'ts':'<ts>', 'twi':'<twi>', 'yo':'<yo>'}
+        tags = [item for item in langtags.items()]
+        
+        def add_prefix(example):
+            example['tweet'] =  langtags[example['tag']] + example['tweet']
+            return example
+        
+        if training_args.do_train:
+            tokenizer.add_tokens(tags)
+            model.resize_token_embeddings(len(tokenizer))
+            train_dataset = train_dataset.map(add_prefix)
 
+        if training_args.do_eval:
+            eval_dataset = eval_dataset.map(add_prefix)
+            
+        if training_args.do_predict:
+            predict_dataset = predict_dataset.map(add_prefix)
+            
     # Preprocessing the datasets
     # Padding strategy
     if data_args.pad_to_max_length:
