@@ -292,7 +292,7 @@ def main():
             df = pd.read_csv(model_args.val_file, sep='\t')
             df = df.dropna()
         predict_dataset = Dataset.from_pandas(df)
-        # label_list = df['label'].unique().tolist()
+        label_list = df['label'].unique().tolist()
 
     # Labels
     num_labels = len(label_list)
